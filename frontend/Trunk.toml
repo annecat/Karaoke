@@ -1,0 +1,5 @@
+[serve]
+# The address to serve on LAN.
+addresses = ["0.0.0.0"]
+port = 8000
+
