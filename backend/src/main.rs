@@ -1,5 +1,7 @@
 use actix_cors::Cors;
 use actix_web::{get, App, HttpServer, Responder, HttpResponse};
+use shuttle_actix_web::ShuttleActixWeb;
+use std::env;
 mod google_sheet_response;
 mod song;
 
@@ -38,6 +40,20 @@ async fn song_data() -> impl Responder {
     HttpResponse::Ok().json(song_list)
 }
 
+
+// The entry point for Shuttle deployment
+#[shuttle_runtime::main]
+async fn actix_web() -> ShuttleActixWeb<impl actix_web::dev::ServiceFactory> {
+    let app = move || {
+        App::new()
+            .route("/song-data", web::get().to(song_data) // Add your routes here
+            .route("/song-update"), web::get().to(song_update))
+    };
+
+    Ok(app.into())
+}
+
+#[cfg(not(target_env = "shuttle"))]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
 
