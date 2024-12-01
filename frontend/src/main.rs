@@ -3,59 +3,106 @@ use serde::Deserialize;
 use gloo_net::http::Request;
 use yew::prelude::*;
 
-#[derive(Deserialize, Debug, Clone)]
-struct GoogleSheetResponse {
-    range: String,
-    majorDimension: String,
-    values: Vec<Vec<String>>, // Nested vectors for rows and columns
+
+#[derive(Deserialize, Clone, PartialEq)]
+struct Song {
+    id: usize,
+    artist: String,
+    name: String,
+    lyrics_url: String,
 }
+
+#[derive(Properties, PartialEq)]
+struct SongsListProps {
+    songs: Vec<Song>,
+    on_click: Callback<Song>
+}
+
+#[derive(Properties, PartialEq)]
+struct SongChosenProps {
+    song: Song,
+}
+
+#[function_component(SongChosen)]
+fn song_details(SongChosenProps { song }: &SongChosenProps) -> Html {
+    html! {
+        <div>
+            <h3>{ song.name.clone() }</h3>
+        </div>
+    }
+}
+
+#[function_component(SongsList)]
+fn songs_list(SongsListProps { songs, on_click }: &SongsListProps) -> Html {
+    
+    songs.iter().map(|song| {
+        let on_song_select = {
+            let on_click = on_click.clone();
+            let song = song.clone();
+            Callback::from(move |_| {
+                on_click.emit(song.clone())
+            })
+        };
+            
+        
+        html! {
+            <tr key={song.id}>
+                <td>{song.artist.clone()}</td>
+                <td>{song.name.clone()}</td>
+                <td onclick={on_song_select}>{ "choisir"}</td>
+            </tr>
+        }
+    }).collect()
+}
+
+
 
 #[function_component(App)]
 fn app() -> Html {
-    let sheet_data = use_state(|| None::<GoogleSheetResponse>);
+
+    let songs = use_state(|| vec![]);
     {
-        let sheet_data = sheet_data.clone();
+        let songs = songs.clone();
         use_effect_with((), move |_| {
             wasm_bindgen_futures::spawn_local(async move {
-                let fetched_sheet: GoogleSheetResponse = Request::get("http://172.31.2.41:8080/sheet-data")
+                let fetched_songs: Vec<Song> = Request::get("http://127.0.0.1:8080/song-data")
                     .send()
                     .await
-                    .unwrap()
-                    .json::<GoogleSheetResponse>()
+                    .unwrap() // TODO : error to handle
+                    .json()
                     .await
-                    .unwrap();
-                sheet_data.set(Some(fetched_sheet));
+                    .unwrap(); // TODO : error to handle
+                songs.set(fetched_songs);
             });
             || ()
         });
     }
+    let selected_song = use_state(|| None);
 
+    let on_song_select = {
+        let selected_song = selected_song.clone();
+        Callback::from(move |song: Song| {
+            selected_song.set(Some(song))
+        })
+    };
+    let chosen_song = selected_song.as_ref().map(|song| html! {
+        <SongChosen song={song.clone()} />
+    });
 
     html! {
-        <div>
-            <h1>{ "Google Sheet Data" }</h1>
-            {
-                if let Some(data) = (*sheet_data).clone() {
-                    html! {
-                        <table>
-                            <thead>
-                                <tr>
-                                    { for data.values.get(0).unwrap_or(&vec![]).iter().map(|header| html! { <th>{ header }</th> }) }
-                                </tr>
-                            </thead>
-                            <tbody>
-                                { for data.values.iter().skip(1).map(|row| html! {
-                                    <tr>
-                                        { for row.iter().map(|cell| html! { <td>{ cell }</td> }) }
-                                    </tr>
-                                }) }
-                            </tbody>
-                        </table>
-                    }
-                } else {
-                    html! { <p>{ "Loading..." }</p> }
-                }
-            }
+        <div class="container">
+            <h1>{ "Ouaiiiiii" }</h1>
+            <table>
+                <thead>
+                    <tr>
+                        <th>{ "Artiste" }</th>
+                        <th>{ "Chanson" }</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <SongsList songs={(*songs).clone()} on_click={on_song_select.clone()}/>
+            </table>
+            { for chosen_song }
         </div>
     }
 }
@@ -63,4 +110,3 @@ fn app() -> Html {
 fn main() {
     yew::Renderer::<App>::new().render();
 }
-    
