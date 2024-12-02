@@ -65,7 +65,7 @@ fn app() -> Html {
         let songs = songs.clone();
         use_effect_with((), move |_| {
             wasm_bindgen_futures::spawn_local(async move {
-                let fetched_songs: Vec<Song> = Request::get("http://127.0.0.1:8080/song-data")
+                let fetched_songs: Vec<Song> = Request::get("http://127.0.0.1:8000/song-data")
                     .send()
                     .await
                     .unwrap() // TODO : error to handle

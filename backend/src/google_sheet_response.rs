@@ -5,8 +5,6 @@ use std::time::UNIX_EPOCH;
 use serde::{Deserialize, Serialize};
 use crate::song::Song;
 
-const ACCOUNT_KEY_FILE:&str = "/mnt/c/perso/geek/karaoke/backend/assets/wise-scene-402116-cb412ba46835.json";
-
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(non_snake_case)]
@@ -29,7 +27,7 @@ struct Claims {
 
 // Function to generate an access token
 pub async fn get_access_token(service_account_key: &str) -> Result<String, reqwest::Error> {
-    let key: serde_json::Value = serde_json::from_str(service_account_key).unwrap();
+    let key: serde_json::Value = serde_json::from_str(service_account_key).expect("google key not in right format");
     let private_key = key["private_key"].as_str().unwrap();
     let client_email = key["client_email"].as_str().unwrap();
 
@@ -67,7 +65,10 @@ pub async fn get_access_token(service_account_key: &str) -> Result<String, reqwe
 // Fetch data from Google Sheets
 pub async fn fetch_google_sheet() -> Result<GoogleSheetResponse, reqwest::Error> {
 
-    let service_account_key = std::fs::read_to_string(ACCOUNT_KEY_FILE).expect("Service account file missing");
+    //let service_account_key = std::fs::read_to_string(ACCOUNT_KEY_FILE).expect("Service account file missing");
+    let service_account_key = std::env::var("GOOGLE_API_KEY").expect("Secret was not found");
+
+    
     let access_token = get_access_token(&service_account_key).await.expect("Failed to authenticate");
     
     let sheet_id = "1OReTpbzBUhBRmgryjINbRhbxbYKsnTxJVKvBUPL2Wm0"; // TODO : put in a config file

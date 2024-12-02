@@ -5,6 +5,6 @@ edition = "2021"
 
 [dependencies]
 yew = { git = "https://github.com/yewstack/yew/", features = ["csr"] }
-gloo-net = "0.2"
+gloo-net = "0.6"
 serde = { version = "1.0", features = ["derive"] }
 wasm-bindgen-futures = "0.4"

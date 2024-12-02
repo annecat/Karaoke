@@ -1,9 +1,12 @@
-use actix_cors::Cors;
-use actix_web::{get, App, HttpServer, Responder, HttpResponse};
+//use actix_cors::Cors;
+use shuttle_runtime::SecretStore;
+use actix_web::web::ServiceConfig;
+use actix_web::{get, Responder, HttpResponse};
 use shuttle_actix_web::ShuttleActixWeb;
-use std::env;
+
 mod google_sheet_response;
 mod song;
+
 
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -43,16 +46,21 @@ async fn song_data() -> impl Responder {
 
 // The entry point for Shuttle deployment
 #[shuttle_runtime::main]
-async fn actix_web() -> ShuttleActixWeb<impl actix_web::dev::ServiceFactory> {
-    let app = move || {
-        App::new()
-            .route("/song-data", web::get().to(song_data) // Add your routes here
-            .route("/song-update"), web::get().to(song_update))
+async fn actix_web(
+    #[shuttle_runtime::Secrets] secrets: SecretStore,
+) -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
+    let config = move |cfg: &mut ServiceConfig| {
+        secrets.into_iter().for_each(|(key, val)| {
+            std::env::set_var(key, val);
+        });
+        cfg.service(song_data);
+        cfg.service(song_update);
     };
 
-    Ok(app.into())
+    Ok(config.into())
 }
 
+/* 
 #[cfg(not(target_env = "shuttle"))]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -73,3 +81,4 @@ async fn main() -> std::io::Result<()> {
     .run()
     .await
 }
+*/
