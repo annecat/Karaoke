@@ -98,12 +98,13 @@ impl GoogleSheetResponse {
             .into_iter()
             .filter_map(|row| {
                 // Attempt to map each row to a Song
-                if let (Some(artist), Some(name)) = (row.get(0), row.get(1)) {
+                if let (Some(artist), Some(title)) = (row.get(0), row.get(1)) {
                     Some(Song {
                         id: 0,
                         artist: artist.clone(),
-                        name: name.clone(),
+                        title: title.clone(),
                         lyrics_url: "test".to_string(),
+                        singer:None
                     })
                 } else {
                     None // Skip rows with invalid data
@@ -118,6 +119,7 @@ impl GoogleSheetResponse {
 mod tests {
     use super::*;
 
+
     #[test]
     fn test_google_format_to_song() {
         let mock_sheet_data = GoogleSheetResponse {
@@ -130,9 +132,9 @@ mod tests {
             ],
         };
         let expected_result = vec![
-            Song{id:0,artist:"artiste 1".to_string(),name:"Chanson A".to_string(),lyrics_url:"test".to_string()},
-            Song{id:0,artist:"artiste 2".to_string(),name:"Chanson B".to_string(),lyrics_url:"test".to_string()},
-            Song{id:0,artist:"artiste 3".to_string(),name:"Chanson C".to_string(),lyrics_url:"test".to_string()},
+            Song{id:0,artist:"artiste 1".to_string(),title:"Chanson A".to_string(),lyrics_url:"test".to_string(),singer:None},
+            Song{id:0,artist:"artiste 2".to_string(),title:"Chanson B".to_string(),lyrics_url:"test".to_string(),singer:None},
+            Song{id:0,artist:"artiste 3".to_string(),title:"Chanson C".to_string(),lyrics_url:"test".to_string(),singer:None},
         ];
 
         let songs = mock_sheet_data.transform_google_format_to_song();

@@ -1,51 +1,51 @@
 use serde::{Deserialize, Serialize};
-use std::fs;
-use std::fs::File;
-use std::io::BufReader;
-use std::io::Write;
+use actix_web::web;
+use sqlx::FromRow;
 
-const SONG_COLLECTION_FILEPATH: &str = "assets/song_collection.json";
+use crate::state::AppState; 
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+
+#[derive(Clone, PartialEq, Serialize, Deserialize, FromRow)]
 pub struct Song {
-    pub id: usize,
+    pub id: i32,
     pub artist: String,
-    pub name: String,
+    pub title: String,
     pub lyrics_url: String,
+    pub singer: Option<String>,
 }
 
-// check if the collection is cache 
-pub fn songs_list_cache_exists() -> bool {
-    match fs::metadata(SONG_COLLECTION_FILEPATH) {
-        Ok(metadata) => {
-            if metadata.is_file() {
-                //println!("File exists: {}", SONG_COLLECTION_FILEPATH);
-                true
-            } else {
-                //println!("Path exists but is not a file: {}", SONG_COLLECTION_FILEPATH);
-                false
-            }
-        }
-        Err(_) => {
-            //println!("File does not exist: {}", SONG_COLLECTION_FILEPATH);
-            false
-        }
+impl Song {
+    pub async fn insert_song_into_playlist(&self, state: web::Data<AppState>) -> Result<Song, sqlx::Error>{
+        sqlx::query_as("INSERT INTO current_playlist(artist, title, lyrics_url, singer) VALUES ($1, $2, $3, $4) RETURNING id, artist, title, lyrics_url, singer")
+            .bind(&self.artist)
+            .bind(&self.title)
+            .bind(&self.lyrics_url)
+            .bind(&self.singer)
+            .fetch_one(&state.pool).await
     }
+
+    pub async fn delete_song_from_playlist(&self, state: web::Data<AppState>) -> Result<bool, sqlx::Error>
+    {
+        let result = sqlx::query("DELETE FROM current_playlist WHERE id = $1")
+            .bind(&self.id)
+            .execute(&state.pool)
+            .await; 
+
+        match result {
+            Ok(query_result) => {
+                // Check if any rows were affected
+                let rows_affected = query_result.rows_affected();
+                Ok(rows_affected > 0) // Returns true if at least one row was deleted
+            }
+            Err(e) => Err(e), // Propagate the error
+        }        
+    }
+
 }
 
-// cache the list of song in a file
-pub fn cache_songs(data: &Vec<Song>) -> std::io::Result<()> {
-    let json = serde_json::to_string_pretty(data)?; // Serialize to JSON
-    let mut file = File::create(SONG_COLLECTION_FILEPATH)?; // Create or overwrite file
-    file.write_all(json.as_bytes())?; // Write JSON to the file
-    Ok(())
+
+pub async fn fetch_song_playlist(state: web::Data<AppState>) -> Result<Vec<Song>, sqlx::Error> {
+    sqlx::query_as("select * FROM current_playlist")
+    .fetch_all(&state.pool)
+    .await
 }
-
-
-pub fn read_from_cache() -> std::io::Result<Vec<Song>> {
-    let file = File::open(SONG_COLLECTION_FILEPATH)?; // Open the file
-    let reader = BufReader::new(file); // Create a buffered reader
-    let songs = serde_json::from_reader(reader)?; // Deserialize JSON to struct
-    Ok(songs)
-}
-
