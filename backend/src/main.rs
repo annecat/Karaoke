@@ -35,7 +35,7 @@ async fn song_data(data: web::Data<AppState>) -> impl Responder {
 
     let song_list;
     // if the song collection does'nt exists we download it ortherwise we use the cache one
-    if !data.is_playlist_cache_empty() {
+    if data.is_playlist_cache_empty() {
         debug!("Song list not cache creating it.");
         let content = google_sheet_response::fetch_google_sheet().await.expect("Error fetching document");
             song_list = content.transform_google_format_to_song();
