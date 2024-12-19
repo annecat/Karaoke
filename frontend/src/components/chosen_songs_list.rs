@@ -18,14 +18,15 @@ pub fn refresh_chosen_songs(chosen_songs_list: UseStateHandle<Vec<Song>>) {
             .await
         {
             Ok(response) => {
-                if let Ok(fetched_songs) = response.json::<Vec<Song>>().await {
-                    chosen_songs_list.set(fetched_songs);
-                    web_sys::console::log_1(&format!("Fetch song ok").into());
-
-                } else {
-                    error!("Failed to parse JSON response");
-                    web_sys::console::log_1(&format!("Failed to parse JSON response").into());
-
+                match response.json::<Vec<Song>>().await {
+                    Ok(fetched_songs) => {
+                        chosen_songs_list.set(fetched_songs);
+                        web_sys::console::log_1(&format!("Fetch song ok").into());
+                    } 
+                    Err(err) => {
+                        error!("Failed to parse JSON response");
+                        web_sys::console::log_1(&format!("Failed to parse JSON response {}", err).into());
+                    }
                 }
             }
             Err(err) => {
