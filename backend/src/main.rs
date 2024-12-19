@@ -1,7 +1,10 @@
+use actix_files::Files;
 use actix_cors::Cors;
 use shuttle_runtime::SecretStore;
 use actix_web::web::ServiceConfig;
 use actix_web::{web, get, post, Responder, HttpResponse};
+use actix_web::http::header::HeaderValue;
+use actix_web::dev::RequestHead;
 use shuttle_actix_web::ShuttleActixWeb;
 use std::sync::{Arc, RwLock};
 use crate::state::AppState;
@@ -9,7 +12,6 @@ use log::debug;
 use sqlx::PgPool;
 use crate::song::Song;
 use serde_json::json;
-
 
 mod google_sheet_response;
 mod song;
@@ -101,6 +103,9 @@ async fn delete_song(song: web::Json<Song>, state: web::Data<AppState>) -> impl 
     }
 }
 
+
+
+
 // The entry point for Shuttle deployment
 #[shuttle_runtime::main]
 async fn actix_web(
@@ -127,7 +132,15 @@ async fn actix_web(
     let config = move |cfg: &mut ServiceConfig| {
 
         let cors = Cors::default()
-        .allowed_origin("http://localhost:8080") // TODO : Replace with a config depending on env
+        .allowed_origin_fn(move |origin: &HeaderValue, _req_head: &RequestHead| {
+            if let Ok(origin_str) = origin.to_str() {
+                //server_config.allowed_origins.contains(&origin_str.to_string())
+                let auth_url = std::env::var("ALLOWED_ORIGINS").expect("Secret was not found");
+                auth_url.contains(&origin_str.to_string())
+            } else {
+                false
+            }
+        })
         .allowed_methods(vec!["GET", "POST"]) // Restrict to needed methods
         .allowed_headers(vec!["Content-Type", "Authorization"]) // Only necessary headers
         .max_age(3600);
@@ -144,7 +157,11 @@ async fn actix_web(
                 .service(delete_song)
                 .app_data(state)
         );
+        // Add a static file service for the `public` folder
+        cfg.service(Files::new("/maestro", "public").index_file("index.html"));
+        cfg.service(Files::new("/", "public").index_file("index.html"));
     };
+
 
     Ok(config.into())
 }
