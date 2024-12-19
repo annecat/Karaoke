@@ -2,10 +2,7 @@ use gloo::timers::callback::Interval;
 use web_sys::window;
 use yew::prelude::*;
 use gloo_net::http::Request;
-use log::info;
-//use crate::config;
-
-
+    
 
 mod components {
     pub mod songs_list;
@@ -73,7 +70,7 @@ fn app() -> Html {
     {
         let on_refresh_click = on_refresh_click.clone();
         use_effect_with((),move |_| {
-            let interval = Interval::new(10000,
+            let interval = Interval::new(60000,
                 move || {
                     web_sys::console::log_1(&"Interval!".into());
                     //refresh_chosen_songs(chosen_songs_list);
@@ -88,10 +85,9 @@ fn app() -> Html {
     }
 
 
-    
     let admin_refresh_song = {
         Callback::from(move |_event : MouseEvent| {
-            info!("On admin refresh click");
+            web_sys::console::log_1(&format!("on refresh click").into());
             force_refresh_songs(songs_list.clone());
         })
     };
@@ -279,7 +275,7 @@ fn app() -> Html {
             }
             if is_admin_page {
                 <button onclick={admin_refresh_song}>
-                { "Force Refresh Google Song list" }
+                    { "Force Refresh Google Song list" }
                 </button>
             }
         </div>
