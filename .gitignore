@@ -2,6 +2,9 @@ backend/target
 backend/Cargo.lock
 backend/assets/wise-scene-402116-cb412ba46835.json
 backend/assets/song_collection.json
+backend/.env
+backend/public
 frontend/target
 frontend/dist
 frontend/Cargo.lock
+frontend/.env
