@@ -71,8 +71,8 @@ pub async fn fetch_google_sheet() -> Result<GoogleSheetResponse, reqwest::Error>
     
     let access_token = get_access_token(&service_account_key).await.expect("Failed to authenticate");
     
-    let sheet_id = "1OReTpbzBUhBRmgryjINbRhbxbYKsnTxJVKvBUPL2Wm0"; // TODO : put in a config file
-    let range = "Chanson!A1:C10"; // TODO : put in a config file
+    let sheet_id = "1KWhp9nuuA4WrbEk2IssQUBVCPjVT6WX9gjuV9qFo7AI"; // TODO : put in a config file
+    let range = "A:D"; // TODO : put in a config file
    
 
 
@@ -98,7 +98,7 @@ impl GoogleSheetResponse {
             .into_iter()
             .filter_map(|row| {
                 // Attempt to map each row to a Song
-                if let (Some(artist), Some(title)) = (row.get(0), row.get(1)) {
+                if let (Some(artist), Some(title)) = (row.get(1), row.get(0)) {
                     Some(Song {
                         id: 0,
                         artist: artist.clone(),
