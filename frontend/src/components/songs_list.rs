@@ -1,7 +1,7 @@
 use yew::prelude::*;
 use crate::types::song::{Song};
 use gloo_net::http::Request;
-use log::{info,error};
+use log::{  error};
 use crate::config::{Config}; 
 
 
@@ -10,17 +10,20 @@ pub fn force_refresh_songs(chosen_songs_list: UseStateHandle<Vec<Song>>) {
     wasm_bindgen_futures::spawn_local(async move {
         let config = Config::load();
         let url = format!("{}/song-update", config.backoffice_url);
+        web_sys::console::log_1(&format!("force_refresh_songs").into());
+
+
         match Request::get(&url)
             .send()
             .await
         {
-            Ok(response) => {
-                info!("Update made -> refresh now ! {:?}", response);
-
+            Ok(_response) => {
                 refresh_songs(chosen_songs_list);
             }
             Err(err) => {
                 error!("Failed to fetch: {:?}", err);
+                web_sys::console::log_1(&format!("Failed to parse JSON response").into());
+
             }
         }
     });
@@ -40,7 +43,7 @@ pub fn refresh_songs(chosen_songs_list: UseStateHandle<Vec<Song>>) {
                 if let Ok(fetched_songs) = response.json::<Vec<Song>>().await {
                     chosen_songs_list.set(fetched_songs);
                 } else {
-                    error!("Failed to parse JSON response");
+                    error!("song-data : Failed to parse JSON response");
                 }
             }
             Err(err) => {
