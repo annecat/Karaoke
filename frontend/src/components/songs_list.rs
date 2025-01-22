@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use yew::prelude::*;
 use crate::types::song::{Song};
 use gloo_net::http::Request;
@@ -62,23 +64,80 @@ pub struct SongsListProps {
 
 #[function_component(SongsList)]
 pub fn songs_list(SongsListProps { on_click, songs_list }: &SongsListProps) -> Html {
+    let search_query = use_state(|| "".to_string());
 
-    songs_list.iter().map(|song| {
-        let on_song_select = {
-            let on_click = on_click.clone();
-            let song = song.clone();
-            Callback::from(move |_| {
-                on_click.emit(song.clone())
+    // Compute filtered songs dynamically
+    let filtered_songs = {
+        let search_query = search_query.clone();
+        let sorted_songs = songs_list.clone();
+        (*sorted_songs)
+            .iter()
+            .filter(|song| {
+                let query = search_query.to_lowercase();
+                song.artist.to_lowercase().contains(&query) || song.title.to_lowercase().contains(&query)
             })
-        };
-            
-        html! {
-            <tr key={song.id}>
-                <td>{song.artist.clone()}</td>
-                <td>{song.title.clone()}</td>
-                <td><a target="_blank" href={song.lyrics_url.clone()}>{ "Paroles"}</a></td>
-                <td><a class="btn" onclick={on_song_select}>{ "choisir"}</a></td>
-            </tr>
-        }
-    }).collect()
+            .cloned()
+            .collect::<Vec<_>>()
+    };
+    
+    html! {
+        <div class="w3-container" id="songs-list">   
+        // Search bar
+            <div class="search-bar">
+                <input
+                    type="text"
+                    placeholder="Rechercher une chanson..."
+                    value={(*search_query).clone()}
+                    oninput={Callback::from(move |e: InputEvent| {
+                        let input = e.target_unchecked_into::<web_sys::HtmlInputElement>();
+                        search_query.set(input.value());
+                    })}
+                />
+            </div>
+
+            // Table
+            <table class="w3-table w3-striped w3-white">
+            <thead class="w3-blue">
+                <tr>
+                    <th>{ "Artiste" }</th>
+                    <th>{ "Titre" }</th>
+                    <th>{ "Paroles" }</th>
+                        <th>{ "Actions" }</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {
+                        for filtered_songs.iter().map(|song| {
+                            let on_song_select = {
+                                let on_click = on_click.clone();
+                                let song = song.clone();
+                                Callback::from(move |_| {
+                                    on_click.emit(song.clone());
+                                })
+                            };
+
+                            html! {
+                                <tr key={song.id.to_string()}>
+                                    <td>{ &song.artist }</td>
+                                    <td>{ &song.title }</td>
+                                    <td>
+                                        <a target="_blank" href={song.lyrics_url.clone()}>
+                                            { "Paroles" }
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <button class="btn" onclick={on_song_select}>
+                                            { "Choisir" }
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        })
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    
 }

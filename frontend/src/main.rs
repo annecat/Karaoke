@@ -280,23 +280,8 @@ fn app() -> Html {
                 </button>
                 </p>
             </div>
-            <div class="w3-container" id="songs-list">   
-                <p>
-                {"Choississez ce que vous voulez chanter ! Cliquer sur choisir, rentrez votre nom. "}
-                {"Et hop ! La chanson apparaitra dans la liste du dessus. Vous pourrez suivre à quand votre tour"}
-                </p>
-                <table class="w3-table w3-striped w3-white">
-                    <thead class="w3-blue">
-                        <tr>
-                            <th>{ "Artiste" }</th>
-                            <th>{ "Chanson" }</th>
-                            <th></th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <SongsList on_click={show_add_popup.clone()} songs_list={(*songs_list_callback).clone()}/>
-                </table>
-            </div>
+             <SongsList on_click={show_add_popup.clone()} songs_list={(*songs_list_callback).clone()}/>
+                
                 {
                 if let Some(_) = &*selected_song_to_add {
                     html! {
