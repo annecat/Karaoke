@@ -9,6 +9,7 @@ mod components {
     pub mod chosen_songs_list;
     pub mod popup_add_song;
     pub mod popup_delete_song;
+    pub mod suggestions;
 }
 
 mod types {
@@ -17,12 +18,14 @@ mod types {
 
 mod config;
 
-use crate::config::{Config};
+use crate::config::Config;
 use crate::components::songs_list::{SongsList, refresh_songs, force_refresh_songs};
-use crate::components::popup_add_song::{PopupAddSong};
-use crate::components::popup_delete_song::{PopupDeleteSong};
+use crate::components::popup_add_song::PopupAddSong;
+use crate::components::popup_delete_song::PopupDeleteSong;
 use crate::components::chosen_songs_list::{ChosenSongsList, refresh_chosen_songs};
-use crate::types::song::{Song};
+use crate::components::suggestions::Suggestions;
+
+use crate::types::song::Song;
 
 #[function_component(App)]
 fn app() -> Html {
@@ -216,40 +219,85 @@ fn app() -> Html {
         })
     };
 
- 
-
 
     html! {
-        <div class="container">
-            <h1>{ "Karaoke des viviers" }</h1>
-            <table>
-                <thead>
-                    <tr>
-                        <th>{ "Artiste" }</th>
-                        <th>{ "Chanson" }</th>
-                        <th>{ "Chanteur"}</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <ChosenSongsList on_click={show_delete_popup.clone()} songs_list={(*chosen_songs_list_callback).clone()}/>
-            </table>
-            <p>
-            <button onclick={on_refresh_click}>
-                { "Refresh Songs" }
-            </button>
-            </p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>{ "Artiste" }</th>
-                        <th>{ "Chanson" }</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <SongsList on_click={show_add_popup.clone()} songs_list={(*songs_list_callback).clone()}/>
-            </table>
-//            { for chosen_song }
-            {
+        <div class="w3-main">
+            <h1 style="text-align:center;">{ "Karaoke des viviers" }</h1>
+            <div class="w3-row-padding w3-margin-bottom">
+                <div class="w3-half">
+                    <a href="#chosen-song" style="text-decoration: none;">
+                        <div class="w3-container w3-red w3-padding-16">
+                            <div class="w3-left"><i class="fa fa-play-circle w3-xxxlarge"></i></div>
+                            <div class="w3-right">
+                            <h3></h3>
+                            </div>
+                            <div class="w3-clear"></div>
+                            <h4>{"Prochains titres"}</h4>
+                        </div>
+                    </a>
+                </div>
+                <div class="w3-half">
+                    <a href="#songs-list" style="text-decoration: none;">
+
+                        <div class="w3-container w3-blue w3-padding-16">
+                            <div class="w3-left"><i class="fa fa-music w3-xxxlarge"></i></div>
+                            <div class="w3-right">
+                            <h3></h3>
+                            </div>
+                            <div class="w3-clear"></div>
+                            <h4>{"Titres disponibles"}</h4>
+                        </div>
+                    </a>
+                </div>    
+            </div>
+
+
+            <div class="w3-container">
+                <p>
+                    {"Bienvenue à cette soirée Karaoké"}
+                </p>
+                <p>
+                    {"Vous trouverez ci-dessous 2 listes de chansons, la première représente les prochaines chansons à venir ! "}
+                    {"La seconde les chansons disponibles que nous vous invitons à choisir, mettez votre nom, validez et vous serez sur la première liste :)"}
+                </p>
+            </div>
+            <div class="w3-container">   
+                <table class="w3-table w3-striped w3-white" id="chosen-song">
+                    <thead class="w3-red">
+                        <tr>
+                            <th></th>
+                            <th>{ "Artiste" }</th>
+                            <th>{ "Chanson" }</th>
+                            <th>{ "Chanteur"}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <ChosenSongsList on_click={show_delete_popup.clone()} songs_list={(*chosen_songs_list_callback).clone()}/>
+                </table>
+                <p>
+                <button onclick={on_refresh_click}>
+                    { "Actualiser la liste de chansons ci-dessus." }
+                </button>
+                </p>
+            </div>
+            <div class="w3-container" id="songs-list">   
+                <p>
+                {"Choississez ce que vous voulez chanter ! Cliquer sur choisir, rentrez votre nom. "}
+                {"Et hop ! La chanson apparaitra dans la liste du dessus. Vous pourrez suivre à quand votre tour"}
+                </p>
+                <table class="w3-table w3-striped w3-white">
+                    <thead class="w3-blue">
+                        <tr>
+                            <th>{ "Artiste" }</th>
+                            <th>{ "Chanson" }</th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <SongsList on_click={show_add_popup.clone()} songs_list={(*songs_list_callback).clone()}/>
+                </table>
+            </div>
+                {
                 if let Some(_) = &*selected_song_to_add {
                     html! {
                         <PopupAddSong
@@ -274,10 +322,11 @@ fn app() -> Html {
                 }
             }
             if is_admin_page {
-                <button onclick={admin_refresh_song}>
-                    { "Force Refresh Google Song list" }
+                <button onclick={admin_refresh_song} class="admin-button">
+                    { "Actualiser la liste de chanson depuis le Google Drive" }
                 </button>
             }
+            <Suggestions />
         </div>
     }
 }

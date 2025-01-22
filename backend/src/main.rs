@@ -11,12 +11,13 @@ use crate::state::AppState;
 use log::debug;
 use sqlx::PgPool;
 use crate::song::Song;
+use crate::suggestion::Suggestion;
 use serde_json::json;
 
 mod google_sheet_response;
 mod song;
 mod state;
-
+mod suggestion;
 
 #[get("/song-update")]
 async fn song_update(data: web::Data<AppState>) -> impl Responder {
@@ -40,6 +41,8 @@ async fn song_data(data: web::Data<AppState>) -> impl Responder {
     if data.is_playlist_cache_empty() {
         debug!("Song list not cache creating it.");
         let content = google_sheet_response::fetch_google_sheet().await.expect("Error fetching document");
+            debug!("{:?}", content);
+            //println!("{:?}", content);
             song_list = content.transform_google_format_to_song();
             data.update_playlist_cache(song_list.clone());
             HttpResponse::Ok().json(song_list)
@@ -81,6 +84,25 @@ async fn add_song(song: web::Json<Song>, state: web::Data<AppState>) -> impl Res
 
 }
  
+
+#[post("/add-suggestion")]
+async fn add_suggestion(suggestion: web::Json<Suggestion>, state: web::Data<AppState>) -> impl Responder {
+
+    let suggestion = suggestion.into_inner().insert_suggestion_into_db(state).await   ;
+    
+    match suggestion {
+        Ok(content) => HttpResponse::Ok().json(json!({
+            "status": "ok",
+            "content": content,
+        })),
+        Err(error) => HttpResponse::InternalServerError().json(json!({
+            "status": "ko",
+            "content": error.to_string(),
+        })),
+    }
+
+}
+
 #[post("/delete-song")]
 async fn delete_song(song: web::Json<Song>, state: web::Data<AppState>) -> impl Responder {
     let deleted = song.into_inner().delete_song_from_playlist(state).await;
@@ -155,6 +177,7 @@ async fn actix_web(
                 .service(add_song)
                 .service(song_playlist)
                 .service(delete_song)
+                .service(add_suggestion)
                 .app_data(state)
         );
         // Add a static file service for the `public` folder

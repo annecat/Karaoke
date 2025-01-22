@@ -6,6 +6,7 @@ pub struct PopupProps {
     pub on_cancel: Callback<()>,       // Callback for cancel button
 }
 
+
 #[function_component(PopupAddSong)]
 pub fn popup_add_song(props: &PopupProps) -> Html {
     let input_value = use_state(|| "".to_string()); // State to hold the input text
@@ -19,9 +20,9 @@ pub fn popup_add_song(props: &PopupProps) -> Html {
         })
     };
 
-    let on_validate = {
+    let on_validate: Callback<MouseEvent> = {
         let input_value = input_value.clone();
-        let on_validate = props.on_validate.clone();
+        let on_validate: Callback<String> = props.on_validate.clone();
         Callback::from(move |_| on_validate.emit((*input_value).clone()))
     };
 
@@ -35,7 +36,7 @@ pub fn popup_add_song(props: &PopupProps) -> Html {
     html! {
         <div class="popup">
             <div class="popup-content">
-                <h3>{ "Song Details" }</h3>
+                <h3>{ "Entrez votre nom :" }</h3>
                 <input
                     type="text"
                     placeholder="Enter text"
@@ -43,8 +44,8 @@ pub fn popup_add_song(props: &PopupProps) -> Html {
                     oninput={on_input}
                 />
                 <div class="popup-buttons">
-                    <button onclick={on_validate}>{ "Validate" }</button>
-                    <button onclick={on_cancel}>{ "Cancel" }</button>
+                    <button onclick={on_validate}>{ "Valider" }</button>
+                    <button onclick={on_cancel}>{ "Annuler" }</button>
                 </div>
             </div>
         </div>

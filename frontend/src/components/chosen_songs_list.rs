@@ -2,8 +2,8 @@ use yew::prelude::*;
 use web_sys::window;
 use gloo_net::http::Request;
 use log::error;
-use crate::types::song::{Song};
-use crate::config::{Config}; 
+use crate::types::song::Song;
+use crate::config::Config; 
 
 
 /// Refresh the chosen songs list by fetching from the server
@@ -53,8 +53,9 @@ pub fn chosen_songs_list(ChosenSongsListProps { on_click, songs_list }: &ChosenS
     // Check if the current URL contains "/admin"
     let is_admin_page = location.contains("/maestro");
 
+    let mut cpt = 0;
 
-    songs_list.iter().map(|song| {
+    let result = songs_list.iter().map(|song| {
         let on_song_select = {
             let on_click = on_click.clone();
             let song = song.clone();
@@ -62,9 +63,10 @@ pub fn chosen_songs_list(ChosenSongsListProps { on_click, songs_list }: &ChosenS
                 on_click.emit(song.clone())
             })
         };
-            
+        cpt = cpt +1;        
         html! {
             <tr key={song.id}>
+                <td>{cpt}</td>
                 <td>{song.artist.clone()}</td>
                 <td>{song.title.clone()}</td>
                 <td>{if song.singer.is_some() { song.singer.clone().unwrap()} else {"None".to_string()} }</td>
@@ -73,8 +75,17 @@ pub fn chosen_songs_list(ChosenSongsListProps { on_click, songs_list }: &ChosenS
                 } else {
                     <td ></td>
                 }
-                
             </tr>
         }
-    }).collect()
+    }).collect();
+    if cpt == 0 {
+        html! {
+            <p>
+                {"Aucune chanson selectionnée"}
+            </p>
+        }
+    }
+    else {
+        result
+    }
 }

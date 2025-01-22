@@ -76,7 +76,8 @@ pub fn songs_list(SongsListProps { on_click, songs_list }: &SongsListProps) -> H
             <tr key={song.id}>
                 <td>{song.artist.clone()}</td>
                 <td>{song.title.clone()}</td>
-                <td onclick={on_song_select}>{ "choisir"}</td>
+                <td><a target="_blank" href={song.lyrics_url.clone()}>{ "Paroles"}</a></td>
+                <td><a class="btn" onclick={on_song_select}>{ "choisir"}</a></td>
             </tr>
         }
     }).collect()

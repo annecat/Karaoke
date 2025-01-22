@@ -1,70 +1,14 @@
-html,
-body {
-  height: 100%;
+tr:nth-child(n+2):nth-child(even) {
+  background-color: #F2F2F2;
 }
 
-body {
-  margin: 0;
-  background: linear-gradient(90deg, #49a09d, #5f2c82);
-  font-family: sans-serif;
-  font-weight: 100;
+tr:nth-child(n+2):nth-child(odd) {
+  background-color: white;
 }
 
-.container {
-  position: absolute;
-  /*top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);*/
+.body {
+  margin: 10px;
 }
-
-table {
-  width: 800px;
-  border-collapse: collapse;
-  overflow: hidden;
-  box-shadow: 0 0 20px rgba(0,0,0,0.1);
-}
-
-th,
-td {
-  padding: 15px;
-  background-color: rgba(255,255,255,0.2);
-  color: #000;
-}
-
-th {  
-  text-align: left;
-}
-
-thead {
-  th {
-    background-color: #55608f;
-  }
-}
-
-tbody {
-  tr {
-    &:hover {
-      background-color: rgba(255,255,255,0.3);
-    }
-  }
-  td {
-    position: relative;
-    &:hover {
-      &:before {
-        content: "";
-        position: absolute;
-        left: 0;
-        right: 0;
-        top: -9999px;
-        bottom: -9999px;
-        background-color: rgba(255,255,255,0.2);
-        z-index: -1;
-      }
-    }
-  }
-}
-
-
 .popup {
   position: fixed;
   top: 0;
@@ -101,4 +45,30 @@ button {
 
 button:hover {
   background-color: #0056b3;
+}
+
+
+#suggestion {
+  padding: 30px;
+}
+
+textarea
+{
+  border:1px solid #999999;
+  width:100%;
+  margin:5px 0;
+  padding:3px;
+}
+
+.btn {
+  padding: 5px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.admin-button {
+  margin:20px;
 }

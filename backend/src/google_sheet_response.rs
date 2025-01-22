@@ -4,6 +4,7 @@ use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 use serde::{Deserialize, Serialize};
 use crate::song::Song;
+use log::debug;
 
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -77,7 +78,7 @@ pub async fn fetch_google_sheet() -> Result<GoogleSheetResponse, reqwest::Error>
 
 
     let url = format!(
-        "https://sheets.googleapis.com/v4/spreadsheets/{}/values/{}",
+       "https://sheets.googleapis.com/v4/spreadsheets/{}/values/{}?valueRenderOption=FORMATTED_VALUE",
         sheet_id, range
     );
 
@@ -87,6 +88,7 @@ pub async fn fetch_google_sheet() -> Result<GoogleSheetResponse, reqwest::Error>
         .bearer_auth(access_token)
         .send()
         .await?;
+    debug!("{:?}", response);
 
     response.json::<GoogleSheetResponse>().await
 }
@@ -96,14 +98,15 @@ impl GoogleSheetResponse {
         self
             .values.clone()
             .into_iter()
+            .skip(1)//skipping the fist element (column names)
             .filter_map(|row| {
                 // Attempt to map each row to a Song
-                if let (Some(artist), Some(title)) = (row.get(1), row.get(0)) {
+                if let (Some(artist), Some(title), Some(lyrics)) = (row.get(1), row.get(0), row.get(3)) {
                     Some(Song {
                         id: 0,
                         artist: artist.clone(),
                         title: title.clone(),
-                        lyrics_url: "test".to_string(),
+                        lyrics_url: lyrics.clone(),
                         singer:None
                     })
                 } else {
@@ -126,15 +129,15 @@ mod tests {
             range: "A1:C1".to_string(),
             majorDimension: "ROWS".to_string(),
             values: vec![
-                vec!["artiste 1".to_string(), "Chanson A".to_string(), "Artist A".to_string()],
-                vec!["artiste 2".to_string(), "Chanson B".to_string(), "Artist A".to_string()],
-                vec!["artiste 3".to_string(), "Chanson C".to_string(), "Artist A".to_string()],
+                vec!["artiste 1".to_string(), "Chanson A".to_string(), "Artist A".to_string(),"Tonalité".to_string(),"test".to_string()],
+                vec!["artiste 2".to_string(), "Chanson B".to_string(), "Artist A".to_string(),"Tonalité".to_string(),"test 2".to_string()],
+                vec!["artiste 3".to_string(), "Chanson C".to_string(), "Artist A".to_string(),"Tonalité".to_string(),"test 3".to_string()],
             ],
         };
         let expected_result = vec![
             Song{id:0,artist:"artiste 1".to_string(),title:"Chanson A".to_string(),lyrics_url:"test".to_string(),singer:None},
-            Song{id:0,artist:"artiste 2".to_string(),title:"Chanson B".to_string(),lyrics_url:"test".to_string(),singer:None},
-            Song{id:0,artist:"artiste 3".to_string(),title:"Chanson C".to_string(),lyrics_url:"test".to_string(),singer:None},
+            Song{id:0,artist:"artiste 2".to_string(),title:"Chanson B".to_string(),lyrics_url:"test 2".to_string(),singer:None},
+            Song{id:0,artist:"artiste 3".to_string(),title:"Chanson C".to_string(),lyrics_url:"test 3".to_string(),singer:None},
         ];
 
         let songs = mock_sheet_data.transform_google_format_to_song();
