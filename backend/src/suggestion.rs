@@ -1,8 +1,28 @@
 use serde::{Deserialize, Serialize};
-use actix_web::web;
+use actix_web::{web, post, Responder, HttpResponse};
 use sqlx::FromRow;
-
 use crate::state::AppState; 
+use serde_json::json;
+
+
+
+#[post("/add-suggestion")]
+async fn add_suggestion(suggestion: web::Json<Suggestion>, state: web::Data<AppState>) -> impl Responder {
+
+    let suggestion = suggestion.into_inner().insert_suggestion_into_db(state).await   ;
+    
+    match suggestion {
+        Ok(content) => HttpResponse::Ok().json(json!({
+            "status": "ok",
+            "content": content,
+        })),
+        Err(error) => HttpResponse::InternalServerError().json(json!({
+            "status": "ko",
+            "content": error.to_string(),
+        })),
+    }
+
+}
 
 
 #[derive(Clone, PartialEq, Serialize, Deserialize, FromRow)]
@@ -19,7 +39,7 @@ impl Suggestion {
             .fetch_one(&state.pool).await
     }
 
-    pub async fn _delete_song_from_playlist(&self, state: web::Data<AppState>) -> Result<bool, sqlx::Error>
+    pub async fn _delete_suggestion_from_playlist(&self, state: web::Data<AppState>) -> Result<bool, sqlx::Error>
     {
         let result = sqlx::query("DELETE FROM suggestions WHERE id = $1")
             .bind(&self.id)
