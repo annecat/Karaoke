@@ -44,8 +44,8 @@ pub fn popup_add_song(props: &PopupProps) -> Html {
                     oninput={on_input}
                 />
                 <div class="popup-buttons">
-                    <button onclick={on_validate}>{ "Valider" }</button>
                     <button onclick={on_cancel}>{ "Annuler" }</button>
+                    <button onclick={on_validate}>{ "Valider" }</button>
                 </div>
             </div>
         </div>
