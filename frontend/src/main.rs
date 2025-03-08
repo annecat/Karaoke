@@ -1,6 +1,4 @@
 use yew::prelude::*;
-use gloo_net::http::Request;
-    
 
 mod components {
     pub mod songs_list;
@@ -19,13 +17,11 @@ mod types {
 
 mod config;
 
-use crate::config::Config;
-use crate::components::songs_list::{SongsList, refresh_songs, force_refresh_songs};
+use crate::components::songs_list::SongsList;
 use crate::components::chosen_songs_list::ChosenSongsList;
 use crate::components::suggestions::Suggestions;
 use crate::components::content::ContentComponent;
 
-use crate::types::song::Song;
 
 #[function_component(App)]
 fn app() -> Html {
