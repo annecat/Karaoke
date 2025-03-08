@@ -1,8 +1,10 @@
+use web_sys::window;
 use yew::prelude::*;
 use crate::types::song::Song;
 use gloo_net::http::Request;
 use log::error;
 use crate::config::Config; 
+use crate::components::popup_add_song::PopupAddSong;
 
 
 /// Refresh the chosen songs list by fetching from the server
@@ -54,19 +56,103 @@ pub fn refresh_songs(chosen_songs_list: UseStateHandle<Vec<Song>>) {
 }
 
 #[derive(Properties, PartialEq)]
-pub struct SongsListProps {
-    pub on_click: Callback<Song>,
-    pub songs_list: Vec<Song>
-
+pub struct SongListProps {
+    pub on_add: Callback<()>, // Callback to notify parent
 }
 
+
 #[function_component(SongsList)]
-pub fn songs_list(SongsListProps { on_click, songs_list }: &SongsListProps) -> Html {
-    let search_query = use_state(|| "".to_string());
+pub fn songs_list(SongListProps { on_add }: &SongListProps) -> Html {
+    let search_query: UseStateHandle<String> = use_state(|| "".to_string());
     // State for sorting
     let sort_column = use_state(|| "artist".to_string()); // Sort by artist initially
     let sort_order = use_state(|| true); // true = ascending, false = descending
+    let selected_song_to_add = use_state(|| None);
 
+    let location = window()
+    .and_then(|win| win.location().pathname().ok()) // Get the path portion of the URL
+    .unwrap_or_else(|| "/".to_string()); // Default to "/" if retrieval fails
+
+    // Check if the current URL contains "/admin"
+    let is_admin_page = location.contains("/maestro");
+
+    let songs_list = use_state(|| vec![]);
+    {
+        let songs_list = songs_list.clone();  
+        use_effect_with((), move |_| {
+            refresh_songs(songs_list.clone());
+        || ()
+        });
+    }
+    let songs_list = songs_list.clone();
+
+    let admin_refresh_song = {
+        let songs_list = songs_list.clone();
+
+        Callback::from(move |_event : MouseEvent| {
+            web_sys::console::log_1(&format!("on refresh click").into());
+            force_refresh_songs(songs_list.clone());
+        })
+    };
+
+    let show_add_popup = {  
+        let selected_song_to_add = selected_song_to_add.clone();
+        Callback::from(move |song: Song| selected_song_to_add.set(Some(song)))
+    };
+
+    let hide_add_popup = {
+        let selected_song_to_add = selected_song_to_add.clone();
+        Callback::from(move |_| selected_song_to_add.set(None))
+    };
+
+    let on_add_validate = {
+        let hide_add_popup = hide_add_popup.clone();
+        let selected_song_to_add = selected_song_to_add.clone();
+        let on_add = on_add.clone();
+
+        Callback::from(move |input: String| {
+            let on_add = on_add.clone();
+
+            web_sys::console::log_1(&format!("Validated input: {}", input).into());
+            if let Some(mut song) = (*selected_song_to_add).clone() {
+                song.singer = Some(input);
+                let json_song = serde_json::to_string(&song).expect("Failed to serialize song to JSON");
+                web_sys::console::log_1(&format!("full song with singer : {}", json_song).into());
+                selected_song_to_add.set(Some(song.clone()));
+
+                wasm_bindgen_futures::spawn_local(async move {
+                    let config = Config::load();
+                    let url = format!("{}/add-song", config.backoffice_url);
+                    let on_add = on_add.clone();
+
+                    match Request::post(&url)
+                        .header("Content-Type", "application/json")
+                        .body(serde_json::to_string(&song).unwrap())
+                    {
+                        Ok(request) => match request.send().await {
+                            Ok(resp) => {
+                                if resp.ok() {
+                                    web_sys::console::log_1(&"Song successfully sent!".into());
+                                    on_add.emit(()); // Notify parent
+                                } else {
+                                    web_sys::console::error_1(&format!("Failed to send song: {:?}", resp).into());
+                                }
+                            }
+                            Err(err) => {
+                                web_sys::console::error_1(&format!("Network error: {}", err).into());
+                            }
+                        },
+                        Err(err) => {
+                            web_sys::console::error_1(&format!("Failed to create request: {}", err).into());
+                        }
+                    }
+                });
+            
+            }
+            hide_add_popup.emit(());
+            
+        })
+    };
 
 
 
@@ -157,7 +243,7 @@ pub fn songs_list(SongsListProps { on_click, songs_list }: &SongsListProps) -> H
                     {
                         for filtered_songs.iter().map(|song| {
                             let on_song_select = {
-                                let on_click = on_click.clone();
+                                let on_click = show_add_popup.clone();
                                 let song = song.clone();
                                 Callback::from(move |_| {
                                     on_click.emit(song.clone());
@@ -184,6 +270,24 @@ pub fn songs_list(SongsListProps { on_click, songs_list }: &SongsListProps) -> H
                     }
                 </tbody>
             </table>
+            {
+                if let Some(_) = &*selected_song_to_add {
+                    html! {
+                        <PopupAddSong
+                            on_validate={on_add_validate}
+                            on_cancel={hide_add_popup}
+                        />
+                    }
+                } else {
+                    html! {}
+                }
+            }
+            
+            if is_admin_page {
+                <button onclick={admin_refresh_song} class="admin-button">
+                    { "Actualiser la liste de chanson depuis le Google Drive" }
+                </button>
+            }
         </div>
     }
 
