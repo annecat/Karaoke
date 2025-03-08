@@ -10,5 +10,5 @@ The whole project is made in rust with a backend using Actix and a frontend usin
 
 To launch the project localy :
     1. Start the backoffice : cd backoffice && cargo shuttle run
-    2. Start the frontoffice : cd frontoffice && cargo run
+    2. Start the frontoffice : cd frontoffice && trunk serve
     3. Go to localhost:8080
