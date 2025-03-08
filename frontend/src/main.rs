@@ -10,6 +10,9 @@ mod components {
     pub mod popup_add_song;
     pub mod popup_delete_song;
     pub mod suggestions;
+    pub mod content;
+    pub mod popup_confirm;
+
 }
 
 mod types {
@@ -24,6 +27,7 @@ use crate::components::popup_add_song::PopupAddSong;
 use crate::components::popup_delete_song::PopupDeleteSong;
 use crate::components::chosen_songs_list::{ChosenSongsList, refresh_chosen_songs};
 use crate::components::suggestions::Suggestions;
+use crate::components::content::ContentComponent;
 
 use crate::types::song::Song;
 
@@ -253,13 +257,8 @@ fn app() -> Html {
 
 
             <div class="w3-container">
-                <p>
-                    {"Bienvenue à cette soirée Karaoké"}
-                </p>
-                <p>
-                    {"Vous trouverez ci-dessous 2 listes de chansons, la première représente les prochaines chansons à venir ! "}
-                    {"La seconde les chansons disponibles que nous vous invitons à choisir, mettez votre nom, validez et vous serez sur la première liste :)"}
-                </p>
+            <ContentComponent content_id="text_intro" />
+              
             </div>
             <div class="w3-container">   
                 <table class="w3-table w3-striped w3-white" id="chosen-song">
@@ -275,7 +274,7 @@ fn app() -> Html {
                     <ChosenSongsList on_click={show_delete_popup.clone()} songs_list={(*chosen_songs_list_callback).clone()}/>
                 </table>
                 <p>
-                <button onclick={on_refresh_click}>
+                <button onclick={on_refresh_click} class="w3-red">
                     { "Actualiser la liste de chansons ci-dessus." }
                 </button>
                 </p>
