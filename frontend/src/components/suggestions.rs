@@ -6,6 +6,9 @@ use serde::Deserialize;
 use serde::Serialize;
 use yew::Properties;
 
+use crate::components::popup_confirm::PopupConfirm;
+
+
 #[derive(Clone, PartialEq, Serialize, Deserialize, Properties)]
 
 pub struct Suggestion {
@@ -19,13 +22,30 @@ pub struct Suggestion {
 pub fn suggestions() -> Html {
     let input_value: UseStateHandle<String> = use_state(|| "".to_string()); // State to hold the input text
     let answer: UseStateHandle<String> = use_state(|| "".to_string()); // State to hold the answer
+    let show_popup = use_state(|| false);
+    let message = use_state(|| "Votre suggestion a été enregistrée.".to_string());
+
+
+    let on_close = {
+        let show_popup = show_popup.clone();
+        let input_value = input_value.clone();
+        Callback::from(move |_| {
+            show_popup.set(false);
+            input_value.set("".to_string());
+        })
+    };
+
 
     let on_validate: Callback<MouseEvent> = {
         let input_value = input_value.clone();
         let answer = answer.clone();
+        let show_popup = show_popup.clone();
+        let message = message.clone();
         Callback::from(move |_| {
             let input_value = input_value.clone();
             let answer = answer.clone();
+            let message = message.clone();
+            let show_popup = show_popup.clone();
             wasm_bindgen_futures::spawn_local(async move {
                 let config = Config::load();
                 let url = format!("{}/add-suggestion", config.backoffice_url);
@@ -42,19 +62,28 @@ pub fn suggestions() -> Html {
                             if resp.ok() {
                                 web_sys::console::log_1(&"Suggestions successfully sent!".into());
                                 answer.set("Votre suggestion a été enregistrée !".to_string());
+                                message.set("Votre suggestion a été enregistrée !".to_string());     
                             } else {
                                 web_sys::console::error_1(&format!("Failed to send Suggestions: {:?}", resp).into());
                                 answer.set("Echec de l'envoi de suggestion :'(".to_string());
+                                message.set("Echec de l'envoi de suggestion :'(".to_string());
                             }
+                            show_popup.set(true);
                         }
                         Err(err) => {
                             web_sys::console::error_1(&format!("Network error: {}", err).into());
+                            message.set("Echec de l'envoi de suggestion :'(".to_string());
                             answer.set("Echec de l'envoi de suggestion :'(".to_string());
+                            show_popup.set(true);
+
                         }
+ 
                     },
                     Err(err) => {
                         web_sys::console::error_1(&format!("Failed to create request: {}", err).into());
+                        message.set("Echec de l'envoi de suggestion :'(".to_string());
                         answer.set("Echec de l'envoi de suggestion :'(".to_string());
+                        show_popup.set(true);
                     }
                 }
             });
@@ -80,6 +109,10 @@ pub fn suggestions() -> Html {
             />
             <button onclick={on_validate}>{ "Valider" }</button>
             <p>{ (*answer).clone() }</p>
+
+            if *show_popup {
+                <PopupConfirm message={(*message).clone()} on_close={on_close.clone()} />
+            }
         </div>
-    }
+}
 }
