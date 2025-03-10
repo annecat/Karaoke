@@ -12,6 +12,7 @@ use sqlx::PgPool;
 use crate::song::{add_song, song_update, song_playlist, delete_song, song_data};
 use crate::suggestion::add_suggestion;
 use crate::content::{add_content, get_content};
+use crate::config::{change_config, get_config};
 
 
 mod google_sheet_response;
@@ -19,11 +20,7 @@ mod song;
 mod content;
 mod state;
 mod suggestion;
-
-
-
-
-
+mod config;
 
 // The entry point for Shuttle deployment
 #[shuttle_runtime::main]
@@ -77,6 +74,8 @@ async fn actix_web(
                 .service(add_suggestion)
                 .service(add_content)
                 .service(get_content)
+                .service(change_config)
+                .service(get_config)
                 .app_data(state)
         );
         // Add a static file service for the `public` folder
