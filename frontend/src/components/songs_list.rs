@@ -58,11 +58,12 @@ pub fn refresh_songs(chosen_songs_list: UseStateHandle<Vec<Song>>) {
 #[derive(Properties, PartialEq)]
 pub struct SongListProps {
     pub on_add: Callback<()>, // Callback to notify parent
+    pub karaoke_open:bool
 }
 
 
 #[function_component(SongsList)]
-pub fn songs_list(SongListProps { on_add }: &SongListProps) -> Html {
+pub fn songs_list(SongListProps { on_add, karaoke_open }: &SongListProps) -> Html {
     let search_query: UseStateHandle<String> = use_state(|| "".to_string());
     // State for sorting
     let sort_column = use_state(|| "artist".to_string()); // Sort by artist initially
@@ -236,7 +237,18 @@ pub fn songs_list(SongListProps { on_add }: &SongListProps) -> Html {
                         { if *sort_column == "title" { if *sort_order { "↑" } else { "↓" } } else { "" } }
                     </th>
                         <th>{ "Paroles" }</th>
-                        <th>{ "Actions" }</th>
+                        {
+                            if *karaoke_open {
+                                html! {
+                                    <th>{ "Actions" }</th>
+                                }
+                            }
+                            else {
+                                html! {
+                                }
+
+                            }
+                        }
                     </tr>
                 </thead>
                 <tbody>
@@ -259,11 +271,21 @@ pub fn songs_list(SongListProps { on_add }: &SongListProps) -> Html {
                                             { "Paroles" }
                                         </a>
                                     </td>
-                                    <td>
-                                        <button class="btn" onclick={on_song_select}>
-                                            { "Choisir" }
-                                        </button>
-                                    </td>
+                                        {
+                                            if *karaoke_open {
+                                                html! {
+                                                    <td>
+                                                        <button class="btn" onclick={on_song_select}>
+                                                            { "Choisir" }
+                                                        </button>
+                                                    </td>
+                                                }
+                                            }
+                                            else {
+                                                html! {
+                                                }
+                                            }
+                                        }
                                 </tr>
                             }
                         })
