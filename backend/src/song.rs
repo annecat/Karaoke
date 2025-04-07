@@ -30,7 +30,7 @@ impl Song {
 
     pub async fn delete_song_from_playlist(&self, state: web::Data<AppState>) -> Result<bool, sqlx::Error>
     {
-        let result = sqlx::query("DELETE FROM current_playlist WHERE id = $1")
+        let result = sqlx::query("UPDATE current_playlist SET is_deleted = TRUE WHERE id = $1")
             .bind(&self.id)
             .execute(&state.pool)
             .await; 
@@ -49,7 +49,7 @@ impl Song {
 
 
 pub async fn fetch_song_playlist(state: web::Data<AppState>) -> Result<Vec<Song>, sqlx::Error> {
-    sqlx::query_as("select * FROM current_playlist")
+    sqlx::query_as("select * FROM current_playlist WHERE is_deleted = FALSE")
     .fetch_all(&state.pool)
     .await
 }
