@@ -1,9 +1,5 @@
 use yew::prelude::*;
-use log::error;
-use gloo_net::http::Request;
-use serde::Deserialize;
-use serde::Serialize;
-use wasm_bindgen_futures::spawn_local;
+use web_sys::window;
 
 mod components {
     pub mod songs_list;
@@ -13,10 +9,12 @@ mod components {
     pub mod suggestions;
     pub mod content;
     pub mod popup_confirm;
+    pub mod open_toggle_button;
 }
 
 mod types {
     pub mod song;
+    pub mod bo_config;
 }
 
 mod config;
@@ -25,53 +23,10 @@ use crate::components::songs_list::SongsList;
 use crate::components::chosen_songs_list::ChosenSongsList;
 use crate::components::suggestions::Suggestions;
 use crate::components::content::ContentComponent;
-use crate::config::Config; 
+use crate::components::open_toggle_button::get_config_open;
+use crate::components::open_toggle_button::OpenToggleButton;
 
 
-#[derive(Clone, PartialEq, Serialize, Deserialize, Properties)]
-pub struct BoConfig {
-    pub id: i32,
-    pub name: String,
-    pub value: String
-}
-
-
-
-async fn get_config_open() -> bool {
-    let mut res = false;
-    let content_to_retrieve = BoConfig {
-        id: 1,
-        name: "open".to_string(),
-        value: "".to_string(),
-    };
-
-    // Replace the URL with your backend endpoint
-    let config = Config::load();
-    let url = format!("{}/get-config", config.backoffice_url);
-
-    if let Ok(request) = Request::post(&url)
-        .header("Content-Type", "application/json")
-        .body(serde_json::to_string(&content_to_retrieve).unwrap())
-    {
-        match request.send().await {
-            Ok(response) => match response.json::<BoConfig>().await {
-                Ok(data) => {
-                    match data.value.as_str() {
-                        "yes" => res = true,
-                        _ => res = false,
-                    }
-                    web_sys::console::error_1(&format!("data added to content").into());
-                }
-                Err(err) => web_sys::console::error_1(&format!("get-content JSON parse error: {}", err).into()),
-            },
-            Err(err) => web_sys::console::error_1(&format!("Request send error: {}", err).into()),
-        }
-    } else {
-        web_sys::console::error_1(&"Failed to create request.".into());
-    }
-
-    res
-}
 
 
 #[function_component(App)]
@@ -85,6 +40,14 @@ fn app() -> Html {
         Callback::from(move |_| refresh_chosen_songs.set(true))
     };
     let is_karaoke_open_clone = is_karaoke_open.clone();
+    let location = window()
+    .and_then(|win: web_sys::Window| win.location().pathname().ok()) // Get the path portion of the URL
+    .unwrap_or_else(|| "/".to_string()); // Default to "/" if retrieval fails
+
+    // Check if the current URL contains "/admin"
+    let is_admin_page = location.contains("/maestro");
+
+
 
     use_effect_with((), move |_| {
         wasm_bindgen_futures::spawn_local(async move {
@@ -131,14 +94,25 @@ fn app() -> Html {
               
             </div>
             <div class="w3-container">   
-                { if *is_karaoke_open
+                { if *is_karaoke_open || is_admin_page
                      {
                         html! {
                             <ChosenSongsList refresh_trigger={refresh_chosen_songs.clone()}/>
                         }
                     } else {
                         html! {
-                            <p>{ "La selection de chanson est fermée" }</p>
+                            <p>
+                                <table class="w3-table w3-striped w3-white" id="chosen-song">
+                                    <thead class="w3-red">
+                                    <tr>
+                                        <th>{"#"}</th>
+                                        <th>{"La selection de chanson est fermée"}</th>    
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </p>
                         }
                     }
                  }
@@ -147,7 +121,20 @@ fn app() -> Html {
              <SongsList on_add={trigger_refresh.clone()} karaoke_open={*is_karaoke_open}/>
                 
              <Suggestions />
-  
+
+
+             { if is_admin_page
+                {
+                    html! {
+                        <p style="center">
+                            {"Ouvrir le karaoké :"} <OpenToggleButton />
+                        </p>
+                    }
+                } else {
+                   html! {
+                   }
+               }
+            }
         </div>
     }
 }
