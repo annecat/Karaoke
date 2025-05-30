@@ -64,7 +64,7 @@ pub async fn get_access_token(service_account_key: &str) -> Result<String, reqwe
 
 
 // Fetch data from Google Sheets
-pub async fn fetch_google_sheet() -> Result<GoogleSheetResponse, reqwest::Error> {
+pub async fn fetch_google_sheet(sheet_id: String) -> Result<GoogleSheetResponse, reqwest::Error> {
 
     //let service_account_key = std::fs::read_to_string(ACCOUNT_KEY_FILE).expect("Service account file missing");
     let service_account_key = std::env::var("GOOGLE_API_KEY").expect("Secret was not found");
@@ -72,7 +72,8 @@ pub async fn fetch_google_sheet() -> Result<GoogleSheetResponse, reqwest::Error>
     
     let access_token = get_access_token(&service_account_key).await.expect("Failed to authenticate");
     
-    let sheet_id = "1KWhp9nuuA4WrbEk2IssQUBVCPjVT6WX9gjuV9qFo7AI"; // TODO : put in a config file
+    //let sheet_id: &'static str = "1KWhp9nuuA4WrbEk2IssQUBVCPjVT6WX9gjuV9qFo7AI"; 
+    
     let range = "A:D"; // TODO : put in a config file
    
 
@@ -101,7 +102,7 @@ impl GoogleSheetResponse {
             .skip(1)//skipping the fist element (column names)
             .filter_map(|row| {
                 // Attempt to map each row to a Song
-                if let (Some(artist), Some(title), Some(lyrics)) = (row.get(1), row.get(0), row.get(3)) {
+                if let (Some(artist), Some(title), Some(lyrics)) = (row.get(1), row.get(0), row.get(2)) {
                     Some(Song {
                         id: 0,
                         artist: artist.clone(),
@@ -129,9 +130,10 @@ mod tests {
             range: "A1:C1".to_string(),
             majorDimension: "ROWS".to_string(),
             values: vec![
-                vec!["artiste 1".to_string(), "Chanson A".to_string(), "Artist A".to_string(),"Tonalité".to_string(),"test".to_string()],
-                vec!["artiste 2".to_string(), "Chanson B".to_string(), "Artist A".to_string(),"Tonalité".to_string(),"test 2".to_string()],
-                vec!["artiste 3".to_string(), "Chanson C".to_string(), "Artist A".to_string(),"Tonalité".to_string(),"test 3".to_string()],
+                vec!["header".to_string(), "header".to_string(), "header".to_string(),"header".to_string(),"header".to_string()],
+                vec!["Chanson A".to_string(), "artiste 1".to_string(), "Artist A".to_string(),"test".to_string(),"test".to_string()],
+                vec!["Chanson B".to_string(), "artiste 2".to_string(), "Artist A".to_string(),"test 2".to_string(),"test 2".to_string()],
+                vec!["Chanson C".to_string(), "artiste 3".to_string(), "Artist A".to_string(),"test 3".to_string(),"test 3".to_string()],
             ],
         };
         let expected_result = vec![
@@ -141,6 +143,7 @@ mod tests {
         ];
 
         let songs = mock_sheet_data.transform_google_format_to_song();
+        println!("{:?}", songs);
     
         assert!(songs == expected_result);
     }

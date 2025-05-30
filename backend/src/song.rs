@@ -4,12 +4,13 @@ use sqlx::FromRow;
 use serde_json::json;
 use log::debug;
 
+use crate::config::Config;
 use crate::state::AppState; 
 use crate::google_sheet_response; 
 
 
 
-#[derive(Clone, PartialEq, Serialize, Deserialize, FromRow)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, FromRow, Debug)]
 pub struct Song {
     pub id: i32,
     pub artist: String,
@@ -58,7 +59,14 @@ pub async fn fetch_song_playlist(state: web::Data<AppState>) -> Result<Vec<Song>
 #[get("/song-update")]
 async fn song_update(data: web::Data<AppState>) -> impl Responder {
 
-    match google_sheet_response::fetch_google_sheet().await {
+    let google_sheet_id= Config {
+            id:0, 
+            name: "google_sheet_id".to_string(), 
+            value : "".to_string()
+        };
+    let google_sheet_id = google_sheet_id.get_config_from_name(data.clone()).await.unwrap();
+
+    match google_sheet_response::fetch_google_sheet(google_sheet_id.value).await {
         Ok(content) => {
             let song_list = content.transform_google_format_to_song();
             data.update_playlist_cache(song_list);
@@ -73,10 +81,17 @@ async fn song_update(data: web::Data<AppState>) -> impl Responder {
 async fn song_data(data: web::Data<AppState>) -> impl Responder {
 
     let song_list;
+    let google_sheet_id= Config {
+            id:0, 
+            name: "google_sheet_id".to_string(), 
+            value : "".to_string()
+        };
+    let google_sheet_id = google_sheet_id.get_config_from_name(data.clone()).await.unwrap();
+
     // if the song collection does'nt exists we download it ortherwise we use the cache one
     if data.is_playlist_cache_empty() {
         debug!("Song list not cache creating it.");
-        let content = google_sheet_response::fetch_google_sheet().await.expect("Error fetching document");
+        let content = google_sheet_response::fetch_google_sheet(google_sheet_id.value).await.expect("Error fetching document");
             debug!("{:?}", content);
             //println!("{:?}", content);
             song_list = content.transform_google_format_to_song();
