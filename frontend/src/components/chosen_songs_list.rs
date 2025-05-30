@@ -43,11 +43,12 @@ pub fn refresh_chosen_songs(chosen_songs_list: UseStateHandle<Vec<Song>>) {
 #[derive(Properties, PartialEq)]
 pub struct ChosenSongsListProps {
     pub refresh_trigger: UseStateHandle<bool>,
+    pub jukebox : bool
 }
 
 
 #[function_component(ChosenSongsList)]
-pub fn chosen_songs_list(ChosenSongsListProps { refresh_trigger }: &ChosenSongsListProps) -> Html {
+pub fn chosen_songs_list(ChosenSongsListProps { refresh_trigger,jukebox }: &ChosenSongsListProps) -> Html {
     let location = window()
     .and_then(|win: web_sys::Window| win.location().pathname().ok()) // Get the path portion of the URL
     .unwrap_or_else(|| "/".to_string()); // Default to "/" if retrieval fails
@@ -182,7 +183,9 @@ pub fn chosen_songs_list(ChosenSongsListProps { refresh_trigger }: &ChosenSongsL
                 <td>{cpt}</td>
                 <td>{song.artist.clone()}</td>
                 <td>{song.title.clone()}</td>
-                <td>{song.singer.clone().unwrap_or_else(|| "None".to_string())}</td>
+                if !jukebox {
+                    <td>{song.singer.clone().unwrap_or_else(|| "None".to_string())}</td>
+                }
                 if is_admin_page {
                     <td>
                         <button class="btn" onclick={on_song_select}>
@@ -208,7 +211,9 @@ pub fn chosen_songs_list(ChosenSongsListProps { refresh_trigger }: &ChosenSongsL
                             <th>{"#"}</th>
                             <th>{"Artiste"}</th>
                             <th>{"Titre"}</th>
-                            <th>{"Chanteur"}</th>
+                            if !jukebox {
+                                <th>{"Chanteur"}</th>
+                            }
                             if is_admin_page {
                                 <th>{"Action"}</th>
                             } 

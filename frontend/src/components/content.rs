@@ -5,6 +5,7 @@ use gloo_net::http::Request;
 use gloo_utils;
 use web_sys::window;
 use crate::config::Config;
+use crate::components::popup_confirm::PopupConfirm;
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
@@ -37,6 +38,8 @@ pub fn content_component(ContentComponentProps { content_id }: &ContentComponent
     // State to hold the content
     let content: UseStateHandle<Option<Content>> = use_state(|| None as Option<Content>);
     // For example, manage a "logged_in" state (in a real app, use a context or auth provider)
+    let show_popup = use_state(|| false);
+    let message: UseStateHandle<String> = use_state(|| "Votre suggestion a été enregistrée.".to_string());
 
     let location = window()
     .and_then(|win| win.location().pathname().ok()) // Get the path portion of the URL
@@ -107,16 +110,26 @@ pub fn content_component(ContentComponentProps { content_id }: &ContentComponent
         })
     };
 
+    let on_close = {
+        let show_popup = show_popup.clone();
+        Callback::from(move |_| {
+            show_popup.set(false);
+        })
+    };
 
     let on_save = {
         let edit_text = edit_text.clone();
         let content_id = content_id.clone();
+        let show_popup = show_popup.clone();
+        let message = message.clone();
 
         Callback::from(move |_| {
             web_sys::console::log_1(&format!("Saving: {}", *edit_text).into());
             let input_value = edit_text.clone();
             let content_id = content_id.clone();
-
+            let show_popup = show_popup.clone();
+            let message = message.clone();
+    
             wasm_bindgen_futures::spawn_local(async move {
                 let config = Config::load();
                 let url = format!("{}/add-content", config.backoffice_url);
@@ -133,19 +146,24 @@ pub fn content_component(ContentComponentProps { content_id }: &ContentComponent
                     Ok(request) => match request.send().await {
                         Ok(resp) => {
                             if resp.ok() {
+                                message.set("Contenu a mis à jour !".to_string());                   
                                 web_sys::console::log_1(&"Content successfully sent!".into());
                             } else {
+                                message.set("Impossible de mettre à jour le contenu".to_string());                   
                                 web_sys::console::error_1(&format!("Failed to send Content: {:?}", resp).into());
                             }
                         }
                         Err(err) => {
+                            message.set("Impossible de mettre à jour le contenu".to_string());                   
                             web_sys::console::error_1(&format!("Content Network error: {}", err).into());
                         }
                     },
                     Err(err) => {
+                        message.set("Impossible de mettre à jour le contenu".to_string());                   
                         web_sys::console::error_1(&format!("Content Failed to create request: {}", err).into());
                     }
                 }
+                show_popup.set(true);
             });
         })
     };
@@ -158,6 +176,8 @@ pub fn content_component(ContentComponentProps { content_id }: &ContentComponent
                     html! {
                         <div>
                             <h3>{ "Edit Content" }</h3>
+//                            <TinyMCEEditor content={(*edit_text).clone()} on_change={on_edit_change.clone()} />
+
                             <textarea
                                 value={(*edit_text).clone()}
                                 oninput={on_edit_change.clone()}
@@ -166,6 +186,9 @@ pub fn content_component(ContentComponentProps { content_id }: &ContentComponent
                             />
                             <br/>
                             <button onclick={on_save}>{ "Save" }</button>
+                            if *show_popup {
+                                <PopupConfirm message={(*message).clone()} on_close={on_close.clone()} />
+                            }
                         </div>
                     }
                 } else {

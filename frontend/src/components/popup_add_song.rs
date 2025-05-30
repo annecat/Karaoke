@@ -4,6 +4,7 @@ use yew::prelude::*;
 pub struct PopupProps {
     pub on_validate: Callback<String>, // Callback for validate button
     pub on_cancel: Callback<()>,       // Callback for cancel button
+    pub jukebox:bool
 }
 
 
@@ -32,13 +33,16 @@ pub fn popup_add_song(props: &PopupProps) -> Html {
             on_cancel.emit(());
         })  
     };
+    let input_type = if props.jukebox { "hidden" } else { "text" };
+    let text = if !props.jukebox { "Entrez votre nom :" } else { "Voulez-vous ajouter cette chanson au jukebox ?" };
+
 
     html! {
         <div class="popup">
             <div class="popup-content">
-                <h3>{ "Entrez votre nom :" }</h3>
+                <h3>{text}</h3>
                 <input
-                    type="text"
+                    type={input_type}
                     placeholder="Enter text"
                     value={(*input_value).clone()}
                     oninput={on_input}

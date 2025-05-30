@@ -27,8 +27,8 @@ pub fn popup_delete_song(props: &PopupProps) -> Html {
                 <h3>{ "Supprimer" }</h3>
                 <p>{"Voulez-vouz vraiment supprimer ?"}</p>
                 <div class="popup-buttons">
-                    <button onclick={on_validate}>{ "Valider" }</button>
                     <button onclick={on_cancel}>{ "Annuler" }</button>
+                    <button onclick={on_validate}>{ "Valider" }</button>
                 </div>
             </div>
         </div>

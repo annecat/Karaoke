@@ -58,12 +58,13 @@ pub fn refresh_songs(chosen_songs_list: UseStateHandle<Vec<Song>>) {
 #[derive(Properties, PartialEq)]
 pub struct SongListProps {
     pub on_add: Callback<()>, // Callback to notify parent
-    pub karaoke_open:bool
+    pub karaoke_open:bool,
+    pub jukebox:bool
 }
 
 
 #[function_component(SongsList)]
-pub fn songs_list(SongListProps { on_add, karaoke_open }: &SongListProps) -> Html {
+pub fn songs_list(SongListProps { on_add, karaoke_open, jukebox }: &SongListProps) -> Html {
     let search_query: UseStateHandle<String> = use_state(|| "".to_string());
     // State for sorting
     let sort_column = use_state(|| "artist".to_string()); // Sort by artist initially
@@ -236,7 +237,7 @@ pub fn songs_list(SongListProps { on_add, karaoke_open }: &SongListProps) -> Htm
                         { "Titre" }
                         { if *sort_column == "title" { if *sort_order { "↑" } else { "↓" } } else { "" } }
                     </th>
-                        <th>{ "Paroles" }</th>
+                        //<th>{ "Paroles" }</th>
                         {
                             if *karaoke_open {
                                 html! {
@@ -266,11 +267,11 @@ pub fn songs_list(SongListProps { on_add, karaoke_open }: &SongListProps) -> Htm
                                 <tr key={song.id.to_string()}>
                                     <td>{ &song.artist }</td>
                                     <td>{ &song.title }</td>
-                                    <td>
-                                        <a target="_blank" href={song.lyrics_url.clone()}>
-                                            { "Paroles" }
-                                        </a>
-                                    </td>
+                                    //<td>
+                                    //    <a target="_blank" href={song.lyrics_url.clone()}>
+                                    //        { "Paroles" }
+                                    //    </a>
+                                    //</td>
                                         {
                                             if *karaoke_open {
                                                 html! {
@@ -298,6 +299,7 @@ pub fn songs_list(SongListProps { on_add, karaoke_open }: &SongListProps) -> Htm
                         <PopupAddSong
                             on_validate={on_add_validate}
                             on_cancel={hide_add_popup}
+                            jukebox={jukebox}
                         />
                     }
                 } else {

@@ -9,7 +9,8 @@ mod components {
     pub mod suggestions;
     pub mod content;
     pub mod popup_confirm;
-    pub mod open_toggle_button;
+    pub mod config_toggle_button;
+    pub mod config_text_input;
 }
 
 mod types {
@@ -23,8 +24,9 @@ use crate::components::songs_list::SongsList;
 use crate::components::chosen_songs_list::ChosenSongsList;
 use crate::components::suggestions::Suggestions;
 use crate::components::content::ContentComponent;
-use crate::components::open_toggle_button::get_config_open;
-use crate::components::open_toggle_button::OpenToggleButton;
+use crate::components::config_toggle_button::get_boolean_config;
+use crate::components::config_toggle_button::ConfigToggleButton;
+use crate::components::config_text_input::ConfigTextInput;
 
 
 
@@ -35,11 +37,14 @@ fn app() -> Html {
     let refresh_chosen_songs: UseStateHandle<bool> = use_state(|| false);
     let is_karaoke_open: UseStateHandle<bool> = use_state(|| false);
 
+    let is_jukebox: UseStateHandle<bool> = use_state(|| false);
+
     let trigger_refresh = {
         let refresh_chosen_songs = refresh_chosen_songs.clone();
         Callback::from(move |_| refresh_chosen_songs.set(true))
     };
     let is_karaoke_open_clone = is_karaoke_open.clone();
+    let is_jukebox_clone = is_jukebox.clone();
     let location = window()
     .and_then(|win: web_sys::Window| win.location().pathname().ok()) // Get the path portion of the URL
     .unwrap_or_else(|| "/".to_string()); // Default to "/" if retrieval fails
@@ -51,8 +56,15 @@ fn app() -> Html {
 
     use_effect_with((), move |_| {
         wasm_bindgen_futures::spawn_local(async move {
-            if get_config_open().await {
+            if get_boolean_config("open".to_string()).await {
                 is_karaoke_open_clone.set(true);
+            }
+        });
+    });
+    use_effect_with((), move |_| {
+        wasm_bindgen_futures::spawn_local(async move {
+            if get_boolean_config("jukebox".to_string()).await {
+                is_jukebox_clone.set(true);
             }
         });
     });
@@ -97,7 +109,7 @@ fn app() -> Html {
                 { if *is_karaoke_open || is_admin_page
                      {
                         html! {
-                            <ChosenSongsList refresh_trigger={refresh_chosen_songs.clone()}/>
+                            <ChosenSongsList refresh_trigger={refresh_chosen_songs.clone()} jukebox={*is_jukebox}/>
                         }
                     } else {
                         html! {
@@ -118,7 +130,7 @@ fn app() -> Html {
                  }
                
             </div>
-             <SongsList on_add={trigger_refresh.clone()} karaoke_open={*is_karaoke_open}/>
+             <SongsList on_add={trigger_refresh.clone()} karaoke_open={*is_karaoke_open} jukebox={*is_jukebox}/>
                 
              <Suggestions />
 
@@ -127,8 +139,18 @@ fn app() -> Html {
                 {
                     html! {
                         <p style="center">
-                            {"Ouvrir le karaoké :"} <OpenToggleButton />
+                            <ul>
+                                <li>{"Karaoké ouvert :"} <ConfigToggleButton name="open"/></li>
+                                <li>{"Mode Jukebox :"} <ConfigToggleButton name="jukebox"/></li>
+                                <li>{"Id google :"} <ConfigTextInput name="google_sheet_id"/>
+                                    <ul>
+                                        <li>{"Carpe # id : 1KWhp9nuuA4WrbEk2IssQUBVCPjVT6WX9gjuV9qFo7AI"}</li>
+                                        <li>{"Annecat playlist # id :1OReTpbzBUhBRmgryjINbRhbxbYKsnTxJVKvBUPL2Wm0"}</li>
+                                    </ul>
+                                </li>
+                            </ul>
                         </p>
+
                     }
                 } else {
                    html! {
