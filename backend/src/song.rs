@@ -50,7 +50,7 @@ impl Song {
 
 
 pub async fn fetch_song_playlist(state: web::Data<AppState>) -> Result<Vec<Song>, sqlx::Error> {
-    sqlx::query_as("select * FROM current_playlist WHERE is_deleted = FALSE")
+    sqlx::query_as("select * FROM current_playlist WHERE is_deleted = FALSE ORDER BY created_at ASC")
     .fetch_all(&state.pool)
     .await
 }
