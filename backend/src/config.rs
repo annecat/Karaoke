@@ -27,7 +27,7 @@ async fn change_config(content: web::Json<Config>, state: web::Data<AppState>) -
 #[post("/get-config")]
 async fn get_config(content: web::Json<Config>, state: web::Data<AppState>) -> impl Responder {
 
-    let res_content = content.into_inner().get_config_from_name(state).await   ;
+    let res_content = content.into_inner().get_config_from_name(state).await;
     
     match res_content {
         Ok(res) => HttpResponse::Ok().json(res),

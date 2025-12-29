@@ -5,7 +5,7 @@ port = 8080
 
 [build]
 target = "index.html"
-dist = "../backend/public"
+dist = "dist"
 
 [release]
 trunk.watch = false

@@ -1,9 +1,0 @@
-[deploy]
-include = [
-    "public/*",
-]
-
-[build]
-assets = [
-    "public/*",
-]

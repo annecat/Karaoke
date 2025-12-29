@@ -1,3 +1,5 @@
+use std::fs;
+use serde_json::Value;
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
 use reqwest::Client;
 use std::time::SystemTime;
@@ -27,10 +29,11 @@ struct Claims {
 
 
 // Function to generate an access token
-pub async fn get_access_token(service_account_key: &str) -> Result<String, reqwest::Error> {
-    let key: serde_json::Value = serde_json::from_str(service_account_key).expect("google key not in right format");
-    let private_key = key["private_key"].as_str().unwrap();
-    let client_email = key["client_email"].as_str().unwrap();
+pub async fn get_access_token(key: &Value) -> Result<String, reqwest::Error> {
+   // let key: serde_json::Value = serde_json::from_str(service_account_key).expect("google key not in right format");
+    let private_key = key["private_key"].as_str().expect("private_key missing");
+    let client_email = key["client_email"].as_str().expect("client_email missing");
+
 
     let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as usize;
     let claims = Claims {
@@ -67,7 +70,10 @@ pub async fn get_access_token(service_account_key: &str) -> Result<String, reqwe
 pub async fn fetch_google_sheet(sheet_id: String) -> Result<GoogleSheetResponse, reqwest::Error> {
 
     //let service_account_key = std::fs::read_to_string(ACCOUNT_KEY_FILE).expect("Service account file missing");
-    let service_account_key = std::env::var("GOOGLE_API_KEY").expect("Secret was not found");
+    //let service_account_key = std::env::var("GOOGLE_API_KEY").expect("Secret was not found");
+    let key_path = std::env::var("GOOGLE_API_KEY_PATH").expect("GOOGLE_API_KEY_PATH not set");
+    let key_file = fs::read_to_string(key_path).expect("Failed to read Google API key file");
+    let service_account_key: Value = serde_json::from_str(&key_file).expect("Invalid JSON in Google API key");
 
     
     let access_token = get_access_token(&service_account_key).await.expect("Failed to authenticate");
@@ -100,11 +106,12 @@ impl GoogleSheetResponse {
             .values.clone()
             .into_iter()
             .skip(1)//skipping the fist element (column names)
-            .filter_map(|row| {
+            .enumerate()
+            .filter_map(|(i, row)| {
                 // Attempt to map each row to a Song
                 if let (Some(artist), Some(title), Some(lyrics)) = (row.get(1), row.get(0), row.get(2)) {
                     Some(Song {
-                        id: 0,
+                        id: (i + 1) as i32,
                         artist: artist.clone(),
                         title: title.clone(),
                         lyrics_url: lyrics.clone(),

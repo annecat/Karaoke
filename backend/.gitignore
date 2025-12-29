@@ -1,6 +1,4 @@
 /target
-.shuttle*
-Secrets*.toml
 /assets
 /public
 .env

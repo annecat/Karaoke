@@ -13,7 +13,7 @@ impl Config {
         let env = match env::var("KARAOKE_BACK_URL")
         {
             Ok(content) => content,
-            _ => "http://127.0.0.1:8000/api".to_string()
+            _ => "http://localhost:8080/api".to_string()
         };
         println!("Backoffice URL: {}", env);
         Config {
