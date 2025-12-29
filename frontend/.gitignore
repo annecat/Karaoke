@@ -1,3 +1,7 @@
 /target
 .shuttle*
 Secrets*.toml
+target
+dist
+Cargo.lock
+.env

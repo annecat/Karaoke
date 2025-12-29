@@ -2,3 +2,5 @@
 /assets
 /public
 .env
+Cargo.lock
+res
