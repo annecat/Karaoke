@@ -34,7 +34,6 @@ RUN cargo build --release
 RUN rm -rf src
 
 # Copy real backend code
-COPY backend/res ./res
 COPY backend/src ./src
 COPY backend/migrations ./migrations 
 
@@ -57,8 +56,6 @@ COPY --from=backend-builder /app/backend/target/release/karaoke ./karaoke
 
 # Copy frontend public folder
 COPY --from=frontend-builder /app/frontend/dist ./public
-
-COPY --from=backend-builder /app/backend/res ./res 
 
 # Cloud Run écoute sur 8080
 EXPOSE 8080
