@@ -1,7 +1,7 @@
 services:
   db:
     env_file:
-      - backend/.env
+      - .env
     image: postgres:16
     ports:
       - "5433:5432"
@@ -10,7 +10,7 @@ services:
 
   backend:
     env_file:
-      - backend/.env
+      - .env
     build:
       context: .
       dockerfile: Dockerfile
@@ -25,6 +25,7 @@ services:
       - db
     volumes:
       - ./backend:/app/backend
+      - ./backend/res:/app/res
     command: ./karaoke
 
 volumes:
