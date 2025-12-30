@@ -37,10 +37,14 @@ fn get_database_url() -> String {
 // The entry point for Shuttle deployment
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    println!("🚀 Backend starting...");
 
     dotenv().ok();
 
-    println!("🚀 Backend starting...");
+    println!("PORT = {:?}", env::var("PORT"));
+    println!("POSTGRES_HOST = {:?}", env::var("POSTGRES_HOST"));
+
+
     // Cloud Run fournit le port via $PORT
     let port: u16 = env::var("PORT")
         .unwrap_or_else(|_| "8080".to_string())
