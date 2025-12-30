@@ -1,3 +1,4 @@
+use std::io::Write;
 use dotenvy::dotenv;
 use std::env;
 use actix_files::Files;
@@ -38,6 +39,7 @@ fn get_database_url() -> String {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     println!("🚀 Backend starting...");
+    std::io::stdout().flush().unwrap();
 
     dotenv().ok();
 
