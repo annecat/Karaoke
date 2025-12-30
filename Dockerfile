@@ -27,10 +27,20 @@ FROM rust:1.92 AS backend-builder
 
 WORKDIR /app/backend
 
+# Installer MUSL et gcc statique
+RUN apt-get update && apt-get install -y \
+    musl-tools \
+    pkg-config 
+
+RUN rustup target add x86_64-unknown-linux-musl
+
+ENV OPENSSL_STATIC=1
+
+
 # Copy backend sources
 COPY backend/Cargo.toml backend/Cargo.lock ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs
-RUN cargo build --release
+RUN cargo build --release --target x86_64-unknown-linux-musl
 RUN rm -rf src
 
 # Copy real backend code
@@ -38,7 +48,7 @@ COPY backend/src ./src
 COPY backend/migrations ./migrations 
 
 
-RUN cargo build --release
+RUN cargo build --release --target x86_64-unknown-linux-musl
 
 
 #Runtime
@@ -52,7 +62,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy backend binary
-COPY --from=backend-builder /app/backend/target/release/karaoke ./karaoke
+COPY --from=backend-builder /app/backend/target/x86_64-unknown-linux-musl/release/karaoke ./karaoke
 
 # Copy frontend public folder
 COPY --from=frontend-builder /app/frontend/dist ./public

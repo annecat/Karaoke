@@ -17,4 +17,5 @@ sqlx = { version= "0.8.2", features = ["runtime-tokio-native-tls", "postgres", "
 toml = "0.8.19"
 actix-files = "0.6.6"
 dotenvy = "0.15.7"
+openssl = { version = "0.10", features = ["vendored"] }
 
